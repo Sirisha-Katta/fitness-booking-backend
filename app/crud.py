@@ -1,0 +1,174 @@
+from app.database import class_collection, booking_collection,user_collection
+from app import models
+from datetime import datetime
+from fastapi import HTTPException
+import pytz
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def format_datetime(dt):
+    return dt.strftime('%d/%m/%Y %H:%M:%S')
+
+async def load_seed_data():
+    if await class_collection.count_documents({}) == 0:
+        sample_classes = [
+            {
+                "class_id": 1,
+                "name": "Yoga",
+                "datetime": format_datetime(datetime(2025, 6, 22, 7, 0)),
+                "instructor": "Alice",
+                "available_slots": 5
+            },
+            {
+                "class_id": 2,
+                "name": "Zumba",
+                "datetime": format_datetime(datetime(2025, 6, 23, 9, 0)),
+                "instructor": "Bob",
+                "available_slots": 3
+            }
+        ]
+        await class_collection.insert_many(sample_classes)
+
+# ✅ Get all classes
+async def get_all_classes():
+    classes = await class_collection.find({}).to_list(length=100)
+    return [
+        {
+            "id": str(cls["_id"]),
+            "class_id": cls["class_id"],
+            "name": cls["name"],
+            "datetime": cls["datetime"],
+            "instructor": cls["instructor"],
+            "available_slots": cls["available_slots"]
+        }
+        for cls in classes
+    ]
+
+# ✅ Create a booking
+import logging
+# Update your models.py to include timezone in BookingRequest
+
+
+# Update your booking creation function in crud.py
+async def create_booking(booking: models.BookingRequest):
+    print(f"Received booking request: {booking}")
+    print(f"class_id: {booking.class_id}, type: {type(booking.class_id)}")
+    print(f"client_name: {booking.client_name}")
+    print(f"client_email: {booking.client_email}")
+    print(f"timezone: {booking.timezone}")
+    
+    try:
+        cls = await class_collection.find_one({"class_id": int(booking.class_id)})
+        print(f"Found class: {cls}")
+        
+        if not cls:
+            print("Class not found!")
+            raise HTTPException(status_code=404, detail="Class not found")
+
+        if cls["available_slots"] <= 0:
+            print("No available slots!")
+            raise HTTPException(status_code=400, detail="No available slots")
+
+        # 🚫 Prevent double booking: check class_id, client_email, datetime AND timezone
+        existing = await booking_collection.find_one({
+            "class_id": cls["class_id"],
+            "client_email": booking.client_email,
+            "datetime": cls["datetime"],
+            "timezone": booking.timezone  # Include timezone in duplicate check
+        })
+        print(f"Existing booking check: {existing}")
+        
+        if existing:
+            print("User already booked this class at this time in this timezone!")
+            raise HTTPException(
+                status_code=400,
+                detail="You have already booked this class at this time in this timezone."
+            )
+
+        # Decrease slot count
+        await class_collection.update_one(
+            {"class_id": int(booking.class_id)},
+            {"$inc": {"available_slots": -1}}
+        )
+
+        booking_doc = {
+            "class_id": cls["class_id"],
+            "class_name": cls["name"],
+            "datetime": cls["datetime"],  # original string, e.g. "22/06/2025 07:00:00"
+            "instructor": cls["instructor"],
+            "client_name": booking.client_name,
+            "client_email": booking.client_email,
+            "timezone": booking.timezone  # Store the specific timezone for this booking
+        }
+
+        result = await booking_collection.insert_one(booking_doc)
+        booking_doc["id"] = str(result.inserted_id)
+        print(f"Booking created successfully: {booking_doc}")
+        return models.Booking(**booking_doc)
+        
+    except HTTPException as e:
+        print(f"HTTPException: {e.detail}")
+        raise
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+# Add endpoint to get user bookings
+
+# Add function to get bookings by email in crud.py
+async def get_bookings_by_email(email: str):
+    bookings = await booking_collection.find({"client_email": email}).to_list(length=100)
+    return [
+        {
+            "id": str(booking["_id"]),
+            "class_id": booking["class_id"],
+            "class_name": booking["class_name"],
+            "datetime": booking["datetime"],
+            "instructor": booking["instructor"],
+            "client_name": booking["client_name"],
+            "client_email": booking["client_email"],
+            "timezone": booking.get("timezone", "Asia/Kolkata")  # Default for old bookings
+        }
+        for booking in bookings
+    ]
+
+# Update your Booking model to include timezone
+
+# ✅ Get bookings by email
+async def get_bookings_by_email(email: str):
+    bookings = await booking_collection.find({"client_email": email}).to_list(100)
+    return [
+        {
+            "id": str(b["_id"]),
+            "class_id": b["class_id"],
+            "class_name": b["class_name"],
+            "datetime": b["datetime"].strftime("%d/%m/%Y %H:%M:%S") if isinstance(b["datetime"], datetime) else b["datetime"],
+            "instructor": b["instructor"],
+            "client_name": b["client_name"],
+            "client_email": b["client_email"],
+        }
+        for b in bookings
+    ]
+    
+async def signup_user(email: str, password: str, name: str):
+    existing_user = await user_collection.find_one({"email": email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    hashed_password = pwd_context.hash(password)
+    user_doc = {
+        "email": email,
+        "name": name,  # Store the name
+        "hashed_password": hashed_password,
+    }
+    await user_collection.insert_one(user_doc)
+    return {"email": email, "name": name}  # Return name as well
+
+async def login_user(email: str, password: str):
+    user = await user_collection.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    if not pwd_context.verify(password, user["hashed_password"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    # Return both email and name
+    return {"email": user["email"], "name": user.get("name", "")}
