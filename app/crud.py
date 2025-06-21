@@ -10,25 +10,46 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def format_datetime(dt):
     return dt.strftime('%d/%m/%Y %H:%M:%S')
 
-async def load_seed_data():
-    if await class_collection.count_documents({}) == 0:
-        sample_classes = [
-            {
-                "class_id": 1,
-                "name": "Yoga",
-                "datetime": format_datetime(datetime(2025, 6, 22, 7, 0)),
-                "instructor": "Alice",
-                "available_slots": 5
-            },
-            {
-                "class_id": 2,
-                "name": "Zumba",
-                "datetime": format_datetime(datetime(2025, 6, 23, 9, 0)),
-                "instructor": "Bob",
-                "available_slots": 3
-            }
-        ]
-        await class_collection.insert_many(sample_classes)
+# async def load_seed_data():
+#     if await class_collection.count_documents({}) == 0:
+#         sample_classes = [
+#     {
+#         "class_id": 1,
+#         "name": "Yoga",
+#         "datetime": format_datetime(datetime(2025, 6, 22, 7, 0)),
+#         "instructor": "Ananya",
+#         "available_slots": 20
+#     },
+#     {
+#         "class_id": 2,
+#         "name": "Zumba",
+#         "datetime": format_datetime(datetime(2025, 6, 23, 9, 0)),
+#         "instructor": "Rohit",
+#         "available_slots": 10
+#     },
+#     {
+#         "class_id": 3,
+#         "name": "HIIT",
+#         "datetime": format_datetime(datetime(2025, 6, 24, 6, 30)),
+#         "instructor": "Kavya",
+#         "available_slots": 20
+#     },
+#     {
+#         "class_id": 4,
+#         "name": "Pilates",
+#         "datetime": format_datetime(datetime(2025, 6, 25, 8, 0)),
+#         "instructor": "Arjun",
+#         "available_slots": 5
+#     },
+#     {
+#         "class_id": 5,
+#         "name": "Strength Training",
+#         "datetime": format_datetime(datetime(2025, 6, 26, 7, 30)),
+#         "instructor": "Meera",
+#         "available_slots": 7
+#     }
+# ]
+#         await class_collection.insert_many(sample_classes)
 
 # ✅ Get all classes
 async def get_all_classes():

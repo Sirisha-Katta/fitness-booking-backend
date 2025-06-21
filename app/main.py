@@ -15,9 +15,9 @@ app.add_middleware(
 )
 
 # Load sample data on server start
-@app.on_event("startup")
-async def startup_event():
-    await crud.load_seed_data()
+# @app.on_event("startup")
+# async def startup_event():
+#     await crud.load_seed_data()
 
 # ✅ List all fitness classes
 @app.get(
