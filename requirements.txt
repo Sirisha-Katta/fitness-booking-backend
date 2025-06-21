@@ -6,3 +6,4 @@ email-validator
 python-dotenv
 uvicorn
 pytz
+passlib[bcrypt]
