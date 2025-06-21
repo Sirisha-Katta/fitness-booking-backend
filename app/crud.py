@@ -137,7 +137,6 @@ async def create_booking(booking: models.BookingRequest):
 
 # Add endpoint to get user bookings
 
-# Add function to get bookings by email in crud.py
 async def get_bookings_by_email(email: str):
     bookings = await booking_collection.find({"client_email": email}).to_list(length=100)
     return [
@@ -145,31 +144,13 @@ async def get_bookings_by_email(email: str):
             "id": str(booking["_id"]),
             "class_id": booking["class_id"],
             "class_name": booking["class_name"],
-            "datetime": booking["datetime"],
+            "datetime": booking["datetime"].strftime("%d/%m/%Y %H:%M:%S") if isinstance(booking["datetime"], datetime) else booking["datetime"],
             "instructor": booking["instructor"],
             "client_name": booking["client_name"],
             "client_email": booking["client_email"],
-            "timezone": booking.get("timezone", "Asia/Kolkata")  # Default for old bookings
+            "timezone": booking.get("timezone", "Asia/Kolkata")  # Use stored timezone, default only if missing
         }
         for booking in bookings
-    ]
-
-# Update your Booking model to include timezone
-
-# ✅ Get bookings by email
-async def get_bookings_by_email(email: str):
-    bookings = await booking_collection.find({"client_email": email}).to_list(100)
-    return [
-        {
-            "id": str(b["_id"]),
-            "class_id": b["class_id"],
-            "class_name": b["class_name"],
-            "datetime": b["datetime"].strftime("%d/%m/%Y %H:%M:%S") if isinstance(b["datetime"], datetime) else b["datetime"],
-            "instructor": b["instructor"],
-            "client_name": b["client_name"],
-            "client_email": b["client_email"],
-        }
-        for b in bookings
     ]
     
 async def signup_user(email: str, password: str, name: str):
