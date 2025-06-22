@@ -161,6 +161,7 @@ async def get_bookings_by_email(email: str):
             "client_email": booking["client_email"],
             "timezone": booking.get("timezone", "Asia/Kolkata")
         })
+        print(results)
     return results
     
 async def signup_user(email: str, password: str, name: str):
