@@ -7,3 +7,4 @@ python-dotenv
 uvicorn
 pytz
 passlib[bcrypt]
+python-dateutil
