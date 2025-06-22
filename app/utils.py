@@ -1,13 +1,26 @@
 from datetime import datetime
 import pytz
 
-def convert_class_timezone(cls: dict, to_timezone: str):
-    from_zone = pytz.timezone("Asia/Kolkata")
-    to_zone = pytz.timezone(to_timezone)
-    # Parse the string to a datetime object
-    dt = datetime.strptime(cls["datetime"], "%d/%m/%Y %H:%M:%S")
-    dt = from_zone.localize(dt)
-    utc_dt = dt.astimezone(pytz.utc)
-    converted_dt = utc_dt.astimezone(to_zone)
-    cls["datetime"] = converted_dt
-    return cls
+from datetime import datetime
+import pytz
+
+def convert_class_timezone(cls, target_timezone):
+    dt = cls["datetime"]
+
+    # Parse string to datetime if needed
+    if isinstance(dt, str):
+        dt = datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S")  # Use ISO format or match actual string format
+
+    # Localize and convert timezone
+    if dt.tzinfo is None:
+        dt = pytz.utc.localize(dt)
+
+    target_tz = pytz.timezone(target_timezone)
+    localized_dt = dt.astimezone(target_tz)
+
+    # ✅ Return the datetime object itself — NOT formatted string
+    return {
+        **cls,
+        "datetime": localized_dt
+    }
+
