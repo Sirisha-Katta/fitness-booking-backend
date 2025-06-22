@@ -96,7 +96,7 @@ async def create_booking(booking: models.BookingRequest):
         existing = await booking_collection.find_one({
             "class_id": cls["class_id"],
             "client_email": booking.client_email,
-            "datetime": cls["datetime"],
+            "datetime": booking.datetime,  
             "timezone": booking.timezone  # Include timezone in duplicate check
         })
         print(f"Existing booking check: {existing}")
