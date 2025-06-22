@@ -114,14 +114,14 @@ async def create_booking(booking: models.BookingRequest):
         )
 
         booking_doc = {
-            "class_id": cls["class_id"],
-            "class_name": cls["name"],
-            "datetime": cls["datetime"],  # original string, e.g. "22/06/2025 07:00:00"
-            "instructor": cls["instructor"],
-            "client_name": booking.client_name,
-            "client_email": booking.client_email,
-            "timezone": booking.timezone  # Store the specific timezone for this booking
-        }
+        "class_id": cls["class_id"],
+        "class_name": cls["name"],
+        "datetime": booking.datetime,  # ✅ Use the datetime sent from the frontend!
+        "instructor": cls["instructor"],
+        "client_name": booking.client_name,
+        "client_email": booking.client_email,
+        "timezone": booking.timezone
+    }
 
         result = await booking_collection.insert_one(booking_doc)
         booking_doc["id"] = str(result.inserted_id)
