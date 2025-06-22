@@ -143,13 +143,19 @@ async def get_bookings_by_email(email: str):
     bookings = await booking_collection.find({"client_email": email}).to_list(length=100)
     results = []
     for booking in bookings:
-        dt = parser.isoparse(booking["datetime"]) if isinstance(booking["datetime"], str) else booking["datetime"]
-        formatted_datetime = dt.strftime("%d/%m/%Y %H:%M:%S")
+        # Take the ISO string and format as 'DD/MM/YYYY HH:MM:SS'
+        iso_str = booking["datetime"]
+        # Split at 'T'
+        date_part, time_part = iso_str.split('T')
+        year, month, day = date_part.split('-')
+        # Remove timezone info from time part (split at '+' or '-')
+        time_part = time_part.split('+')[0].split('-')[0]
+        formatted_datetime = f"{day}/{month}/{year} {time_part}"
         results.append({
             "id": str(booking["_id"]),
             "class_id": booking["class_id"],
             "class_name": booking["class_name"],
-            "datetime": formatted_datetime,  # <-- Now this will be 11:00:00 for your example!
+            "datetime": formatted_datetime,
             "instructor": booking["instructor"],
             "client_name": booking["client_name"],
             "client_email": booking["client_email"],
