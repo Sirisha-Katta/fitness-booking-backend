@@ -18,7 +18,7 @@ class BookingRequest(BaseModel):
     client_name: str = Field(..., alias="name")
     client_email: str = Field(..., alias="email")
     class_id: int
-    timezone: str = "Asia/Kolkata"  # Default timezone
+    timezone: str = "Asia/Kolkata"  
     datetime: str 
 
 class Booking(BaseModel):

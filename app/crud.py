@@ -73,11 +73,6 @@ async def get_all_classes():
     ]
 
 # ✅ Create a booking
-import logging
-# Update your models.py to include timezone in BookingRequest
-
-
-# Update your booking creation function in crud.py
 async def create_booking(booking: models.BookingRequest):
     print(f"Received booking request: {booking}")
     print(f"class_id: {booking.class_id}, type: {type(booking.class_id)}")
@@ -122,7 +117,7 @@ async def create_booking(booking: models.BookingRequest):
         booking_doc = {
         "class_id": cls["class_id"],
         "class_name": cls["name"],
-        "datetime": booking.datetime,  # ✅ Use the datetime sent from the frontend!
+        "datetime": booking.datetime, 
         "instructor": cls["instructor"],
         "client_name": booking.client_name,
         "client_email": booking.client_email,
@@ -141,20 +136,15 @@ async def create_booking(booking: models.BookingRequest):
         print(f"Unexpected error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-# Add endpoint to get user bookings
-
-
 async def get_bookings_by_email(email: str):
     bookings = await booking_collection.find({"client_email": email}).to_list(length=100)
     results = []
     for booking in bookings:
-        # dt = parser.isoparse(booking["datetime"]) if isinstance(booking["datetime"], str) else booking["datetime"]
-        # formatted_datetime = dt.strftime("%d/%m/%Y %H:%M:%S")
         results.append({
             "id": str(booking["_id"]),
             "class_id": booking["class_id"],
             "class_name": booking["class_name"],
-            "datetime": booking["datetime"],  # <-- Now this will be 11:00:00 for your example!
+            "datetime": booking["datetime"],  
             "instructor": booking["instructor"],
             "client_name": booking["client_name"],
             "client_email": booking["client_email"],
@@ -169,11 +159,11 @@ async def signup_user(email: str, password: str, name: str):
     hashed_password = pwd_context.hash(password)
     user_doc = {
         "email": email,
-        "name": name,  # Store the name
+        "name": name, 
         "hashed_password": hashed_password,
     }
     await user_collection.insert_one(user_doc)
-    return {"email": email, "name": name}  # Return name as well
+    return {"email": email, "name": name} 
 
 async def login_user(email: str, password: str):
     user = await user_collection.find_one({"email": email})
@@ -181,5 +171,4 @@ async def login_user(email: str, password: str):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     if not pwd_context.verify(password, user["hashed_password"]):
         raise HTTPException(status_code=401, detail="Invalid email or password")
-    # Return both email and name
     return {"email": user["email"], "name": user.get("name", "")}
